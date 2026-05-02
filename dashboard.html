@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — GeoTask</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <!-- Leaflet CSS for map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- ── Sidebar ─────────────────────────────────────────────── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <span class="dot"></span> GeoTask
+    </div>
+
+    <div class="nav-label">Menu</div>
+    <button class="nav-item active" data-view="dashboard">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-item" data-view="map">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+      Map View
+    </button>
+
+    <div class="nav-label" style="margin-top:1rem;">Tasks</div>
+    <button class="nav-item" id="add-task-nav">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      Add Task
+    </button>
+
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar" id="user-avatar">?</div>
+        <div class="user-info">
+          <div class="user-name" id="user-name">Loading…</div>
+          <div class="user-email" id="user-email"></div>
+        </div>
+      </div>
+      <button class="btn btn-secondary" style="width:100%; margin-top:0.75rem; justify-content:center;" id="logout-btn">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- ── Main Content ─────────────────────────────────────────── -->
+  <main class="main-content">
+
+    <!-- Location Banner -->
+    <div class="location-banner" id="location-banner" style="display:none;">
+      <span class="dot-live"></span>
+      <span>Location tracking active — you'll be notified when near a task location</span>
+    </div>
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <h1 id="greeting">Good morning 👋</h1>
+        <p class="subtitle">Here's what's on your list today</p>
+      </div>
+      <button class="btn btn-primary" id="add-task-btn" style="width:auto;">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New Task
+      </button>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card" style="--accent-color: var(--accent2)">
+        <div class="icon" style="background:rgba(34,211,238,0.1); color:var(--accent2)">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        </div>
+        <div class="value" id="stat-total">—</div>
+        <div class="label">Total Tasks</div>
+      </div>
+      <div class="stat-card" style="--accent-color: var(--warn)">
+        <div class="icon" style="background:rgba(251,191,36,0.1); color:var(--warn)">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="value" id="stat-pending">—</div>
+        <div class="label">Pending</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="value" id="stat-done">—</div>
+        <div class="label">Completed</div>
+      </div>
+      <div class="stat-card" style="--accent-color: var(--danger)">
+        <div class="icon" style="background:rgba(248,113,113,0.1); color:var(--danger)">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+        <div class="value" id="stat-location">—</div>
+        <div class="label">With Location</div>
+      </div>
+    </div>
+
+    <!-- Tasks Section -->
+    <div class="section-header">
+      <div class="section-title">Your Tasks</div>
+      <div class="filter-bar">
+        <button class="filter-chip active" data-filter="all">All</button>
+        <button class="filter-chip" data-filter="pending">Pending</button>
+        <button class="filter-chip" data-filter="done">Done</button>
+        <button class="filter-chip" data-filter="high">High Priority</button>
+        <button class="filter-chip" data-filter="location">With Location</button>
+        <button class="filter-chip" data-filter="reminder">With Reminder</button>
+      </div>
+    </div>
+
+    <div class="tasks-grid" id="tasks-grid">
+      <div class="empty-state">
+        <div class="icon">⏳</div>
+        <h3>Loading tasks…</h3>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ── Add / Edit Task Modal ─────────────────────────────────── -->
+<div class="modal-backdrop" id="task-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modal-title">New Task</h2>
+      <button class="modal-close" id="modal-close">✕</button>
+    </div>
+
+    <input type="hidden" id="task-id" />
+
+    <div class="form-group">
+      <label>Task Title *</label>
+      <input type="text" id="task-title" placeholder="What needs to be done?" />
+    </div>
+
+    <div class="form-group">
+      <label>Description</label>
+      <textarea id="task-desc" placeholder="Add more details…"></textarea>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Priority</label>
+        <select id="task-priority">
+          <option value="low">↓ Low</option>
+          <option value="medium" selected>→ Medium</option>
+          <option value="high">↑ High</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Due Date</label>
+        <input type="date" id="task-due" />
+      </div>
+    </div>
+
+    <!-- ── Time Reminder Section ─────────────────────────────── -->
+    <div class="reminder-section" style="background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm); padding:1rem; margin-bottom:1.2rem;">
+      <div style="font-size:0.78rem; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); margin-bottom:0.75rem;">⏰ Time Reminder (Optional)</div>
+
+      <div class="form-group" style="margin-bottom:0;">
+        <label>Remind me at</label>
+        <input type="datetime-local" id="task-reminder-time" />
+        <div style="font-size:0.72rem; color:var(--muted); margin-top:0.4rem;">The app will sound an alarm at this exact date and time.</div>
+      </div>
+
+      <button class="btn btn-secondary btn-sm" id="clear-reminder" style="margin-top:0.6rem; display:none;">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        Clear Reminder
+      </button>
+    </div>
+
+    <!-- ── Location Section ──────────────────────────────────── -->
+    <div style="background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm); padding:1rem; margin-bottom:1.2rem;">
+      <div style="font-size:0.78rem; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); margin-bottom:0.75rem;">📍 Location Reminder (Optional)</div>
+
+      <!-- Reminder mode tabs -->
+      <div class="reminder-tabs">
+        <button class="reminder-tab active" id="tab-search">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Search Place
+        </button>
+        <button class="reminder-tab" id="tab-map">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg>
+          Pick on Map
+        </button>
+        <button class="reminder-tab" id="tab-current">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+          My Location
+        </button>
+      </div>
+
+      <!-- Search panel -->
+      <div id="panel-search">
+        <div class="form-group location-search-wrap" style="margin-bottom:0;">
+          <input type="text" id="loc-search-input" placeholder="Search for a place…" autocomplete="off" />
+          <button class="loc-search-clear" id="loc-search-clear" style="display:none;">✕</button>
+          <div class="location-dropdown" id="loc-dropdown"></div>
+        </div>
+      </div>
+
+      <!-- Map panel (hidden by default) -->
+      <div id="panel-map" style="display:none;">
+        <div style="font-size:0.78rem; color:var(--muted); margin-bottom:0.5rem;">Click anywhere on the map to pin your task location.</div>
+        <div id="task-map" style="height:240px; border-radius:var(--radius-sm); overflow:hidden; border:1px solid var(--border);"></div>
+      </div>
+
+      <!-- My Location panel -->
+      <div id="panel-current" style="display:none;">
+        <button class="btn btn-secondary btn-sm" id="use-current-loc" style="width:100%; justify-content:center;">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+          Capture My Current Location
+        </button>
+      </div>
+
+      <!-- Location preview (shared) -->
+      <div class="location-preview" id="location-preview" style="margin-top:0.75rem;">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span id="location-text">No location set</span>
+      </div>
+
+      <div style="display:flex; gap:0.5rem; margin-top:0.6rem; flex-wrap:wrap; align-items:center;">
+        <button class="btn btn-secondary btn-sm" id="clear-loc" style="display:none;">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Clear Location
+        </button>
+      </div>
+
+      <div class="form-group" style="margin-top:0.75rem; margin-bottom:0;">
+        <label>Alert Radius (meters)</label>
+        <input type="number" id="task-radius" value="200" min="50" max="5000" step="50" />
+      </div>
+    </div>
+
+    <!-- Hidden lat/lng -->
+    <input type="hidden" id="task-lat" />
+    <input type="hidden" id="task-lng" />
+
+    <div style="display:flex; gap:0.75rem;">
+      <button class="btn btn-secondary" style="flex:1;" id="modal-cancel">Cancel</button>
+      <button class="btn btn-primary" style="flex:2;" id="save-task-btn">Save Task</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Supabase CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="js/app.js"></script>
+<script>
+// ── State ──────────────────────────────────────────────────────
+let allTasks = [];
+let currentFilter = 'all';
+let currentUser = null;
+
+// ── Leaflet Map State ──────────────────────────────────────────
+let taskMap = null;
+let taskMapMarker = null;
+
+// ── Init ───────────────────────────────────────────────────────
+(async () => {
+  currentUser = await requireAuth();
+  if (!currentUser) return;
+
+  const meta = currentUser.user_metadata || {};
+  const name = meta.full_name || currentUser.email.split('@')[0];
+  document.getElementById('user-name').textContent = name;
+  document.getElementById('user-email').textContent = currentUser.email;
+  document.getElementById('user-avatar').textContent = name.charAt(0).toUpperCase();
+
+  const hr = new Date().getHours();
+  const greet = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('greeting').textContent = `${greet}, ${name.split(' ')[0]} 👋`;
+
+  await loadTasks();
+  startLocationTracking();
+  timeEngine.start(allTasks);
+})();
+
+// ── Load Tasks ─────────────────────────────────────────────────
+async function loadTasks() {
+  const { data, error } = await sb
+    .from('tasks')
+    .select('*')
+    .eq('user_id', currentUser.id)
+    .order('created_at', { ascending: false });
+
+  if (error) { showToast('Failed to load tasks: ' + error.message, 'error'); return; }
+
+  allTasks = data || [];
+  updateStats();
+  renderTasks();
+  reminderEngine.updateTasks(allTasks);
+  timeEngine.updateTasks(allTasks);
+}
+
+// ── Stats ──────────────────────────────────────────────────────
+function updateStats() {
+  const done     = allTasks.filter(t => t.done).length;
+  const pending  = allTasks.filter(t => !t.done).length;
+  const withLoc  = allTasks.filter(t => t.lat && t.lng).length;
+  document.getElementById('stat-total').textContent    = allTasks.length;
+  document.getElementById('stat-pending').textContent  = pending;
+  document.getElementById('stat-done').textContent     = done;
+  document.getElementById('stat-location').textContent = withLoc;
+}
+
+// ── Render Tasks ───────────────────────────────────────────────
+function renderTasks() {
+  const grid = document.getElementById('tasks-grid');
+  let tasks = [...allTasks];
+
+  if (currentFilter === 'pending')  tasks = tasks.filter(t => !t.done);
+  if (currentFilter === 'done')     tasks = tasks.filter(t => t.done);
+  if (currentFilter === 'high')     tasks = tasks.filter(t => t.priority === 'high');
+  if (currentFilter === 'location') tasks = tasks.filter(t => t.lat && t.lng);
+  if (currentFilter === 'reminder') tasks = tasks.filter(t => t.reminder_time);
+
+  if (!tasks.length) {
+    grid.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">📭</div>
+        <h3>No tasks here</h3>
+        <p>Add a new task to get started</p>
+      </div>`;
+    return;
+  }
+
+  grid.innerHTML = tasks.map((t, i) => {
+    const reminderStr = t.reminder_time
+      ? formatDateTime(t.reminder_time)
+      : null;
+    const reminderBadge = reminderStr
+      ? `<span class="badge badge-purple">⏰ ${reminderStr}</span>`
+      : '';
+
+    return `
+    <div class="task-card ${t.done ? 'done' : ''}" style="animation-delay:${i * 0.04}s">
+      <div class="priority-bar priority-${t.priority || 'low'}"></div>
+      <div style="padding-left:0.5rem;">
+        <div class="task-card-head">
+          <div class="task-title">${escHtml(t.title)}</div>
+          <div class="task-actions">
+            <button class="btn btn-icon btn-secondary btn-sm" title="Edit" onclick="openEditModal('${t.id}')">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button class="btn btn-icon btn-danger btn-sm" title="Delete" onclick="deleteTask('${t.id}')">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+            </button>
+          </div>
+        </div>
+        ${t.description ? `<div class="task-desc">${escHtml(t.description)}</div>` : ''}
+        <div class="task-meta">
+          ${priorityBadge(t.priority || 'low')}
+          ${t.done
+            ? '<span class="badge badge-gray">✓ Done</span>'
+            : `<button class="badge badge-blue" style="cursor:pointer;border:none;" onclick="toggleDone('${t.id}', true)">Mark Done</button>`
+          }
+          ${t.done ? `<button class="badge badge-gray" style="cursor:pointer;border:none;" onclick="toggleDone('${t.id}', false)">Reopen</button>` : ''}
+          ${t.due_date ? `<span class="badge badge-gray">📅 ${formatDateShort(t.due_date)}</span>` : ''}
+          ${reminderBadge}
+        </div>
+        ${t.lat && t.lng ? `
+          <div class="task-location">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span>${escHtml(t.location_name || `${t.lat.toFixed(4)}, ${t.lng.toFixed(4)}`)}</span>
+            <span style="color:var(--muted); font-size:0.7rem;">(${t.radius || 200}m)</span>
+          </div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Toggle Done ────────────────────────────────────────────────
+async function toggleDone(id, done) {
+  const { error } = await sb.from('tasks').update({ done }).eq('id', id).eq('user_id', currentUser.id);
+  if (error) { showToast('Update failed', 'error'); return; }
+  await loadTasks();
+  showToast(done ? 'Task marked as done ✓' : 'Task reopened', 'success');
+}
+
+// ── Delete Task ────────────────────────────────────────────────
+async function deleteTask(id) {
+  if (!confirm('Delete this task?')) return;
+  const { error } = await sb.from('tasks').delete().eq('id', id).eq('user_id', currentUser.id);
+  if (error) { showToast('Delete failed', 'error'); return; }
+  await loadTasks();
+  showToast('Task deleted', 'info');
+}
+
+// ── Modal ──────────────────────────────────────────────────────
+const modal      = document.getElementById('task-modal');
+const modalTitle = document.getElementById('modal-title');
+
+function openModal() {
+  modal.classList.add('open');
+  document.getElementById('task-id').value = '';
+  document.getElementById('task-title').value = '';
+  document.getElementById('task-desc').value = '';
+  document.getElementById('task-priority').value = 'medium';
+  document.getElementById('task-due').value = '';
+  document.getElementById('task-lat').value = '';
+  document.getElementById('task-lng').value = '';
+  document.getElementById('task-radius').value = '200';
+  document.getElementById('task-reminder-time').value = '';
+  document.getElementById('clear-reminder').style.display = 'none';
+  resetLocationPreview();
+  switchTab('search');
+  modalTitle.textContent = 'New Task';
+  document.getElementById('task-title').focus();
+}
+
+function openEditModal(id) {
+  const t = allTasks.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('task-id').value       = t.id;
+  document.getElementById('task-title').value    = t.title;
+  document.getElementById('task-desc').value     = t.description || '';
+  document.getElementById('task-priority').value = t.priority || 'medium';
+  document.getElementById('task-due').value      = t.due_date || '';
+  document.getElementById('task-lat').value      = t.lat || '';
+  document.getElementById('task-lng').value      = t.lng || '';
+  document.getElementById('task-radius').value   = t.radius || 200;
+
+  // Populate reminder time — convert stored UTC to local datetime-local format
+  if (t.reminder_time) {
+    const local = toLocalDatetimeInput(t.reminder_time);
+    document.getElementById('task-reminder-time').value = local;
+    document.getElementById('clear-reminder').style.display = 'inline-flex';
+  } else {
+    document.getElementById('task-reminder-time').value = '';
+    document.getElementById('clear-reminder').style.display = 'none';
+  }
+
+  if (t.lat && t.lng) {
+    setLocationPreview(t.location_name || `${t.lat.toFixed(4)}, ${t.lng.toFixed(4)}`);
+  } else {
+    resetLocationPreview();
+  }
+
+  switchTab('search');
+  modalTitle.textContent = 'Edit Task';
+  modal.classList.add('open');
+}
+
+function closeModal() {
+  modal.classList.remove('open');
+  // Destroy map to avoid Leaflet duplicate issues on reopen
+  if (taskMap) { taskMap.remove(); taskMap = null; taskMapMarker = null; }
+}
+
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('modal-cancel').addEventListener('click', closeModal);
+modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+document.getElementById('add-task-btn').addEventListener('click', openModal);
+document.getElementById('add-task-nav').addEventListener('click', openModal);
+
+// ── Save Task ──────────────────────────────────────────────────
+document.getElementById('save-task-btn').addEventListener('click', async () => {
+  const id       = document.getElementById('task-id').value;
+  const title    = document.getElementById('task-title').value.trim();
+  const desc     = document.getElementById('task-desc').value.trim();
+  const priority = document.getElementById('task-priority').value;
+  const due      = document.getElementById('task-due').value || null;
+  const lat      = parseFloat(document.getElementById('task-lat').value) || null;
+  const lng      = parseFloat(document.getElementById('task-lng').value) || null;
+  const radius   = parseInt(document.getElementById('task-radius').value) || 200;
+  const locName  = document.getElementById('location-text').textContent;
+  const reminderRaw = document.getElementById('task-reminder-time').value;
+  // Convert datetime-local string to UTC ISO string
+  const reminderTime = reminderRaw ? new Date(reminderRaw).toISOString() : null;
+
+  if (!title) { showToast('Please enter a task title', 'error'); return; }
+
+  if (reminderTime && new Date(reminderTime) <= new Date()) {
+    showToast('Reminder time must be in the future', 'error'); return;
+  }
+
+  const payload = {
+    title,
+    description: desc,
+    priority,
+    due_date: due,
+    lat,
+    lng,
+    radius,
+    location_name: (lat && lng) ? locName : null,
+    reminder_time: reminderTime,
+    user_id: currentUser.id
+  };
+
+  const btn = document.getElementById('save-task-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Saving…';
+
+  let error;
+  if (id) {
+    ({ error } = await sb.from('tasks').update(payload).eq('id', id).eq('user_id', currentUser.id));
+  } else {
+    ({ error } = await sb.from('tasks').insert({ ...payload, done: false }));
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Save Task';
+
+  if (error) { showToast('Save failed: ' + error.message, 'error'); return; }
+  closeModal();
+  await loadTasks();
+  showToast(id ? 'Task updated ✓' : 'Task created ✓', 'success');
+});
+
+// ── Reminder time: show clear button when set ──────────────────
+document.getElementById('task-reminder-time').addEventListener('change', function() {
+  document.getElementById('clear-reminder').style.display = this.value ? 'inline-flex' : 'none';
+});
+document.getElementById('clear-reminder').addEventListener('click', () => {
+  document.getElementById('task-reminder-time').value = '';
+  document.getElementById('clear-reminder').style.display = 'none';
+});
+
+// ── Location Tab Switching ─────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.reminder-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  document.getElementById('panel-search').style.display  = tab === 'search'  ? 'block' : 'none';
+  document.getElementById('panel-map').style.display     = tab === 'map'     ? 'block' : 'none';
+  document.getElementById('panel-current').style.display = tab === 'current' ? 'block' : 'none';
+
+  if (tab === 'map') {
+    initTaskMap();
+  }
+}
+
+document.getElementById('tab-search').addEventListener('click',  () => switchTab('search'));
+document.getElementById('tab-map').addEventListener('click',     () => switchTab('map'));
+document.getElementById('tab-current').addEventListener('click', () => switchTab('current'));
+
+// ── Leaflet Map Picker ─────────────────────────────────────────
+function initTaskMap() {
+  if (taskMap) {
+    // Already initialised — just invalidate size in case modal was resized
+    setTimeout(() => taskMap.invalidateSize(), 100);
+    return;
+  }
+
+  // Default center: Hyderabad, India
+  const defaultLat = 17.3850;
+  const defaultLng = 78.4867;
+
+  taskMap = L.map('task-map', { zoomControl: true }).setView([defaultLat, defaultLng], 12);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 19,
+  }).addTo(taskMap);
+
+  // Custom green marker icon
+  const greenIcon = L.divIcon({
+    html: `<div style="
+      width:28px; height:28px;
+      background:#4ade80;
+      border:3px solid #0a0e1a;
+      border-radius:50% 50% 50% 0;
+      transform:rotate(-45deg);
+      box-shadow:0 2px 12px rgba(74,222,128,0.6);
+    "></div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 28],
+    className: '',
+  });
+
+  // If we already have coords (edit mode), place marker
+  const existingLat = parseFloat(document.getElementById('task-lat').value);
+  const existingLng = parseFloat(document.getElementById('task-lng').value);
+  if (existingLat && existingLng) {
+    taskMapMarker = L.marker([existingLat, existingLng], { icon: greenIcon }).addTo(taskMap);
+    taskMap.setView([existingLat, existingLng], 15);
+  }
+
+  // Click to place / move marker
+  taskMap.on('click', async (e) => {
+    const { lat, lng } = e.latlng;
+
+    if (taskMapMarker) {
+      taskMapMarker.setLatLng([lat, lng]);
+    } else {
+      taskMapMarker = L.marker([lat, lng], { icon: greenIcon }).addTo(taskMap);
+    }
+
+    document.getElementById('task-lat').value = lat;
+    document.getElementById('task-lng').value = lng;
+    setLocationPreview('Fetching address…');
+
+    const name = await reverseGeocode(lat, lng);
+    setLocationPreview(name);
+    showToast('Location pinned ✓', 'success');
+  });
+
+  setTimeout(() => taskMap.invalidateSize(), 200);
+}
+
+// ── Location helpers ───────────────────────────────────────────
+function setLocationPreview(name) {
+  document.getElementById('location-text').textContent = name;
+  document.getElementById('location-preview').classList.add('loaded');
+  document.getElementById('clear-loc').style.display = 'inline-flex';
+}
+
+function resetLocationPreview() {
+  document.getElementById('location-preview').classList.remove('loaded');
+  document.getElementById('location-text').textContent = 'No location set';
+  document.getElementById('clear-loc').style.display = 'none';
+  document.getElementById('task-lat').value = '';
+  document.getElementById('task-lng').value = '';
+  document.getElementById('loc-search-input').value = '';
+  document.getElementById('loc-dropdown').classList.remove('open');
+  if (taskMapMarker && taskMap) { taskMap.removeLayer(taskMapMarker); taskMapMarker = null; }
+}
+
+document.getElementById('clear-loc').addEventListener('click', resetLocationPreview);
+
+// ── Use Current Location (tab panel) ──────────────────────────
+document.getElementById('use-current-loc').addEventListener('click', async () => {
+  const btn = document.getElementById('use-current-loc');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Getting…';
+  try {
+    const pos = await getCurrentPosition();
+    const { latitude: lat, longitude: lng } = pos.coords;
+    document.getElementById('task-lat').value = lat;
+    document.getElementById('task-lng').value = lng;
+    const name = await reverseGeocode(lat, lng);
+    setLocationPreview(name);
+    showToast('Location captured ✓', 'success');
+  } catch {
+    showToast('Could not get location. Please allow location access.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg> Capture My Current Location`;
+  }
+});
+
+// ── Place Search (Nominatim) ───────────────────────────────────
+let searchTimeout = null;
+const locInput    = document.getElementById('loc-search-input');
+const locDropdown = document.getElementById('loc-dropdown');
+const locClear    = document.getElementById('loc-search-clear');
+
+locInput.addEventListener('input', () => {
+  const q = locInput.value.trim();
+  locClear.style.display = q ? 'block' : 'none';
+  clearTimeout(searchTimeout);
+  if (q.length < 2) { locDropdown.classList.remove('open'); return; }
+
+  locDropdown.innerHTML = `<div class="loc-searching"><span class="spinner"></span> Searching…</div>`;
+  locDropdown.classList.add('open');
+
+  searchTimeout = setTimeout(async () => {
+    const results = await searchPlaces(q);
+    if (!results.length) {
+      locDropdown.innerHTML = `<div class="loc-searching">No results found</div>`;
+      return;
+    }
+    locDropdown.innerHTML = results.map((r, i) =>
+      `<div class="loc-option" data-i="${i}">
+        <div class="loc-name">${escHtml(r.name)}</div>
+        <div class="loc-sub">${escHtml(r.display)}</div>
+      </div>`
+    ).join('');
+
+    locDropdown.querySelectorAll('.loc-option').forEach((el, i) => {
+      el.addEventListener('click', () => {
+        const r = results[i];
+        document.getElementById('task-lat').value = r.lat;
+        document.getElementById('task-lng').value = r.lng;
+        locInput.value = r.name;
+        locDropdown.classList.remove('open');
+        setLocationPreview(r.name);
+        showToast('Location set ✓', 'success');
+      });
+    });
+  }, 400);
+});
+
+locClear.addEventListener('click', () => {
+  locInput.value = '';
+  locClear.style.display = 'none';
+  locDropdown.classList.remove('open');
+});
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.location-search-wrap')) locDropdown.classList.remove('open');
+});
+
+// ── Filters ────────────────────────────────────────────────────
+document.querySelectorAll('.filter-chip').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter;
+    renderTasks();
+  });
+});
+
+// ── Logout ─────────────────────────────────────────────────────
+document.getElementById('logout-btn').addEventListener('click', async () => {
+  reminderEngine.stop();
+  timeEngine.stop();
+  await signOut();
+});
+
+// ── Location Tracking ──────────────────────────────────────────
+async function startLocationTracking() {
+  if (!navigator.geolocation) return;
+  try {
+    await reminderEngine.start(allTasks);
+    document.getElementById('location-banner').style.display = 'flex';
+  } catch { /* silently skip if denied */ }
+}
+
+// ── Utilities ──────────────────────────────────────────────────
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Convert UTC ISO string → datetime-local input value (local time)
+function toLocalDatetimeInput(isoStr) {
+  const d = new Date(isoStr);
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+</script>
+</body>
+</html>
